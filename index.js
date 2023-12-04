@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
@@ -30,6 +29,31 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const requestCollection = client.db('bladDb').collection('requests');
+
+
+// donation request api
+    app.post('/requests', async (req, res) => {
+      const reqItem = req.body;
+      const result = await requestCollection.insertOne(reqItem);
+      res.send(result);
+    });
+
+    app.get('/requests', async (req, res) => {
+      let query = {};
+      if (req.query?.reqEmail) {
+        query = { reqEmail: req.query?.reqEmail };
+      }
+      const result = await requestCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.delete('/requests/:id', async (req, res) => {
+      const id = req.params?.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await requestCollection.deleteOne(query);
+      res.send(result);
+    });
   } finally {
   }
 }
@@ -38,7 +62,6 @@ run().catch(console.dir);
 app.get('/', (req, res) => {
   res.send('Blad is running');
 });
-
 app.listen(port, () => {
   console.log(`Blad is listening on port: ${port}`);
 });
