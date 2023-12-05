@@ -166,10 +166,24 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/users', async (req, res) => {
+      let query = {};
+      if (req.query?.reqEmail) {
+        query = { reqEmail: req.query?.reqEmail };
+      }
+      const result = await userCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // donation request api
     app.post('/requests', async (req, res) => {
       const reqItem = req.body;
       const result = await requestCollection.insertOne(reqItem);
+      res.send(result);
+    });
+
+    app.get('/requests', verifyToken, verifyAdmin, async (req, res) => {
+      const result = await requestCollection.find().toArray();
       res.send(result);
     });
 
