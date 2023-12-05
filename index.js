@@ -69,6 +69,27 @@ async function run() {
       next();
     };
 
+    const verifyVolunteer = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isVolunteer = user?.role === 'volunteer';
+      if (!isVolunteer) {
+        return res.status(403).send({ message: 'Access denied' });
+      }
+      next();
+    };
+    const verifyDonor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isDonor = user?.role === 'donor';
+      if (!isDonor) {
+        return res.status(403).send({ message: 'Access denied' });
+      }
+      next();
+    };
+
     //users api
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -76,18 +97,13 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+    app.get('/users', verifyToken, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
 
     app.get('/users/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
-
-      if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'forbidden access' });
-      }
-
       const query = { email: email };
       const user = await userCollection.findOne(query);
       let admin = false;
@@ -99,11 +115,6 @@ async function run() {
 
     app.get('/users/volunteer/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
-
-      if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'forbidden access' });
-      }
-
       const query = { email: email };
       const user = await userCollection.findOne(query);
       let volunteer = false;
@@ -116,7 +127,7 @@ async function run() {
     app.patch(
       '/users/admin/:id',
       verifyToken,
-      verifyAdmin,
+
       async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -182,17 +193,54 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/requests', verifyToken, verifyAdmin, async (req, res) => {
+    app.patch('/requests/:id', async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          recName: item.recName,
+          recDistrict: item.recDistrict,
+          recUpazila: item.recUpazila,
+          hospital: item.hospital,
+          address: item.address,
+          date: item.date,
+          time: item.time,
+          message: item.message,
+        },
+      };
+
+      const result = await requestCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    app.get('/requests', async (req, res) => {
       const result = await requestCollection.find().toArray();
       res.send(result);
     });
 
     app.get('/requests', async (req, res) => {
+      console.log('reqEmail:', req.query?.reqEmail);
       let query = {};
       if (req.query?.reqEmail) {
         query = { reqEmail: req.query?.reqEmail };
       }
-      const result = await requestCollection.find(query).toArray();
+      console.log('Query:', query);
+
+      try {
+        const result = await requestCollection.find(query).toArray();
+        console.log('Result:', result);
+        res.send(result);
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send({ message: 'Internal Server Error' });
+      }
+    });
+
+    app.get('/requests/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await requestCollection.findOne(query);
       res.send(result);
     });
 
