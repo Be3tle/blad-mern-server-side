@@ -220,7 +220,6 @@ async function run() {
     });
 
     app.get('/requests', async (req, res) => {
-      console.log('reqEmail:', req.query?.reqEmail);
       let query = {};
       if (req.query?.reqEmail) {
         query = { reqEmail: req.query?.reqEmail };
@@ -235,6 +234,13 @@ async function run() {
         console.error('Error:', error);
         res.status(500).send({ message: 'Internal Server Error' });
       }
+    });
+
+    app.get('/requests/:reqEmail', async (req, res) => {
+      const email = req.params.email;
+      const reqEmail = { reqEmail: email };
+      const result = await requestCollection.find(reqEmail).toArray();
+      res.send(result);
     });
 
     app.get('/requests/:id', async (req, res) => {
