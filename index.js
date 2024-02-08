@@ -236,7 +236,7 @@ async function run() {
       }
     });
 
-    app.get('/requests/:reqEmail', async (req, res) => {
+    app.get('/requests/:email', async (req, res) => {
       const email = req.params.email;
       const reqEmail = { reqEmail: email };
       const result = await requestCollection.find(reqEmail).toArray();
